@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a4da2">
+<title>重大百晓生 · 校园智能助手</title>
+<style>
+  :root{
+    --blue:#0a4da2; --blue2:#1273d4; --blue-light:#eaf2fc;
+    --green:#00b386; --green-light:#e2f8f1;
+    --orange:#ff9f43; --orange-light:#fff3e3;
+    --pink:#ff6b81; --pink-light:#ffeef1;
+    --purple:#7c5cff; --purple-light:#efeaff;
+    --bg:#eef3fa; --card:#fff; --text:#1b2a3a; --sub:#6b7a8c; --line:#e7eef7;
+    --r:18px; --sh:0 8px 28px rgba(10,77,162,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(160deg,#dcecff,#eef6ff 50%,#e6fbf4);color:var(--text);
+    display:flex;justify-content:center;align-items:flex-start}
+  #app{width:100%;max-width:480px;min-height:100dvh;background:var(--bg);position:relative;
+    display:flex;flex-direction:column;box-shadow:0 0 60px rgba(10,77,162,.15)}
+  header{background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 55%,var(--green) 150%);
+    color:#fff;padding:calc(env(safe-area-inset-top) + 16px) 18px 64px;border-radius:0 0 26px 26px;
+    position:relative;overflow:hidden;flex-shrink:0}
+  header::after{content:"";position:absolute;right:-50px;top:-50px;width:200px;height:200px;
+    background:radial-gradient(circle,rgba(255,255,255,.16),transparent 70%);border-radius:50%}
+  .brand{display:flex;align-items:center;gap:12px;position:relative}
+  .logo{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
+    display:flex;align-items:center;justify-content:center;font-size:24px;backdrop-filter:blur(6px)}
+  .brand h1{font-size:19px;letter-spacing:1px}
+  .brand p{font-size:11px;opacity:.88;margin-top:2px}
+  .search{margin-top:16px;position:relative;z-index:2}
+  .search input{width:100%;border:none;outline:none;border-radius:14px;padding:13px 16px 13px 42px;
+    font-size:14px;background:rgba(255,255,255,.95);color:var(--text);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  .search .si{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;opacity:.5}
+  main{flex:1;padding:14px 14px calc(82px + env(safe-area-inset-bottom));overflow-y:auto;margin-top:-44px;position:relative;z-index:1}
+  .page{display:none;animation:fade .35s ease}
+  .page.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .sec{font-size:13px;color:var(--sub);font-weight:700;margin:20px 4px 10px;display:flex;align-items:center;gap:7px}
+  .sec::before{content:"";width:4px;height:15px;border-radius:3px;background:linear-gradient(var(--blue),var(--green))}
+  .sec span{margin-left:auto;font-weight:400;color:#9aa8b8;font-size:11px}
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px;border:1px solid var(--line)}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .tile{background:var(--card);border-radius:var(--r);padding:15px 14px;box-shadow:var(--sh);
+    cursor:pointer;transition:transform .15s;border:1px solid var(--line);position:relative}
+  .tile:active{transform:scale(.97)}
+  .tile .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:9px}
+  .tile h3{font-size:14.5px} .tile p{font-size:11px;color:var(--sub);margin-top:3px;line-height:1.5}
+  .banner{background:linear-gradient(120deg,var(--blue),var(--blue2));border-radius:var(--r);color:#fff;
+    padding:15px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:var(--sh)}
+  .banner:active{transform:scale(.98)} .banner .em{font-size:30px}
+  .banner h3{font-size:14.5px} .banner p{font-size:11px;opacity:.85;margin-top:3px}
+  .banner .go{margin-left:auto;font-size:20px;opacity:.85}
+  .seg{display:flex;background:#e4ecf6;border-radius:12px;padding:4px;gap:4px}
+  .seg button{flex:1;border:none;background:none;padding:8px 2px;border-radius:9px;font-size:12px;
+    color:var(--sub);cursor:pointer;transition:.2s;font-weight:600}
+  .seg button.on{background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(10,77,162,.12)}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-top:10px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;padding:7px 13px;border-radius:999px;font-size:12.5px;cursor:pointer;
+    background:#fff;border:1px solid var(--line);color:var(--sub);transition:.15s}
+  .chip.on{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-color:transparent;font-weight:600}
+  /* ===== 官方平面图 + 可点击地点标记 ===== */
+  .mapbox{position:relative;margin-top:12px;border-radius:16px;overflow:hidden;
+    box-shadow:var(--sh);border:1px solid var(--line);background:#eef3ea;height:440px}
+  .mapbox .leaflet-container{border-radius:16px;font:inherit}
+  .pin-emoji{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);border:2px solid #fff;font-size:14px;line-height:1}
+  .leaflet-div-icon{background:transparent;border:none}
+  .leaflet-tooltip.m-tip{background:#ff4d4f;color:#fff;border:none;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .leaflet-tooltip.m-tip::before{display:none}
+  .mapbox.measuring{cursor:crosshair}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:11.5px;color:var(--sub)}
+  .legend .lg{display:flex;align-items:center;gap:5px}
+  .legend .ld{width:11px;height:11px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+  .hot{position:absolute;transform:translate(-50%,-50%);z-index:2;width:26px;height:26px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .hot .dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;pointer-events:none;
+    box-shadow:0 0 0 2px rgba(0,0,0,.18),0 1px 4px rgba(0,0,0,.4);transition:transform .15s}
+  .hot:hover .dot{transform:scale(1.35)}
+  .hot.c-jx .dot{background:#3e86d6}.hot.c-cy .dot{background:#f5921e}.hot.c-sh .dot{background:#8f6cf0}
+  .hot.c-yd .dot{background:#28bd93}.hot.c-fj .dot{background:#2bb3ab}
+  .hot.dim{opacity:.18}
+  .hot.sel .dot{box-shadow:0 0 0 7px rgba(18,115,212,.4);animation:pulse 1.2s infinite}
+  @keyframes pulse{50%{transform:scale(1.5)}}
+  .hot .hname{display:none;position:absolute;left:50%;top:calc(100% - 1px);transform:translateX(-50%);
+    background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;
+    white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none;z-index:4}
+  .hot .hname.up{top:auto;bottom:calc(100% - 1px)}
+  .hot.sel .hname{display:block}
+  .mapbox .zoombtn{display:none}
+  /* 校区简介卡 */
+  .campus-intro{margin-top:12px;background:linear-gradient(120deg,var(--blue-light),#f4f9ff);
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:12.5px;line-height:1.65;color:var(--sub)}
+  .campus-intro b{color:var(--blue)}
+  /* 测距工具 */
+  .mbtn{margin-top:10px;border:1px solid var(--line);background:#fff;border-radius:999px;
+    padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--blue);cursor:pointer;box-shadow:var(--sh)}
+  .mbtn.on{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-color:transparent}
+  .measure-hint{margin-top:8px;font-size:12px;color:var(--orange);background:var(--orange-light);
+    border-radius:10px;padding:7px 10px;display:none;line-height:1.5}
+  .mapbox.measuring{cursor:crosshair}
+  .mapbox.measuring .hot .dot{box-shadow:0 0 0 3px rgba(255,77,79,.5),0 1px 4px rgba(0,0,0,.4)}
+  #measureLayer{position:absolute;inset:0;z-index:3;pointer-events:none}
+  .mline-label{position:absolute;transform:translate(-50%,-145%);background:#ff4d4f;color:#fff;
+    font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;
+    box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .pill-row{display:flex;gap:7px;overflow-x:auto;padding:4px 2px;margin-top:10px}
+  .pill-row::-webkit-scrollbar{display:none}
+  .pill{flex-shrink:0;font-size:11.5px;background:#fff;border:1px solid var(--line);border-radius:999px;
+    padding:6px 11px;color:var(--text);cursor:pointer;box-shadow:0 2px 6px rgba(10,77,162,.06)}
+  /* 地点信息面板 */
+  .mask{position:fixed;inset:0;background:rgba(8,28,58,.45);z-index:40;display:none}
+  .mask.on{display:block;animation:fade .2s ease}
+  .sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(110%);width:100%;max-width:480px;
+    background:#fff;border-radius:22px 22px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 20px);
+    z-index:41;transition:transform .32s cubic-bezier(.2,.8,.25,1);box-shadow:0 -10px 34px rgba(0,0,0,.2)}
+  .sheet.on{transform:translateX(-50%) translateY(0)}
+  .sh-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .sh-em{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px}
+  .sh-head h3{font-size:17px} .sh-head .tg{font-size:10.5px;color:var(--blue);background:var(--blue-light);
+    padding:1px 8px;border-radius:8px;margin-right:5px;font-weight:600}
+  .sh-x{margin-left:auto;width:32px;height:32px;border:none;border-radius:50%;background:#eef3fa;
+    color:var(--sub);font-size:17px;cursor:pointer}
+  .sheet p{font-size:13.5px;line-height:1.8;color:#33465c}
+  .sheet .tip{margin-top:10px;font-size:12px;color:var(--orange);background:var(--orange-light);
+    border-radius:10px;padding:8px 11px}
+  /* 校车 */
+  .next{background:linear-gradient(135deg,var(--blue),var(--blue2));border-radius:var(--r);color:#fff;
+    padding:18px;box-shadow:var(--sh);text-align:center}
+  .next .lab{font-size:12px;opacity:.85}
+  .next .t{font-size:42px;font-weight:800;letter-spacing:2px;margin:4px 0;font-variant-numeric:tabular-nums}
+  .next .sub{font-size:12.5px;opacity:.9}
+  .next .sub b{color:#ffe08a}
+  .tb-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border-radius:11px;
+    margin-bottom:7px;border:1px solid var(--line);font-size:13.5px}
+  .tb-row .tm{font-weight:700;font-variant-numeric:tabular-nums;color:var(--blue);min-width:50px}
+  .tb-row .ds{font-size:11.5px;color:var(--sub)}
+  .tb-row.past{opacity:.45}
+  .tb-row.soon{border-color:var(--green);background:var(--green-light)}
+  .tb-row .badge{margin-left:auto;font-size:10px;padding:2px 8px;border-radius:8px;background:#eef3fa;color:var(--sub)}
+  select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:13.5px;
+    outline:none;background:#fff;color:var(--text);margin-top:10px}
+  .xroute{margin-top:10px}
+  .xroute h4{font-size:13px;color:var(--blue);margin-bottom:8px}
+  .xtable{width:100%;border-collapse:collapse;font-size:11px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 3px 10px rgba(10,77,162,.06)}
+  .xtable th,.xtable td{border:1px solid var(--line);padding:6px 4px;text-align:center;font-variant-numeric:tabular-nums}
+  .xtable th{background:var(--blue-light);color:var(--blue);font-weight:600}
+  .xtable .wk{color:var(--pink);font-weight:700}
+  .note{font-size:10.5px;color:#9aa8b8;margin-top:8px;line-height:1.7}
+  /* GPA / 电话 */
+  .gpa-row{display:flex;gap:8px;margin-bottom:8px}
+  .gpa-row input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13px;outline:none;min-width:0}
+  .gpa-row input:focus{border-color:var(--blue)}
+  .gpa-row .del{width:32px;height:32px;border:none;border-radius:9px;background:var(--pink-light);color:var(--pink);font-size:16px;cursor:pointer;flex-shrink:0}
+  .btn{width:100%;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;
+    background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:var(--sh);margin-top:4px}
+  .btn:active{transform:scale(.98)} .btn.ghost{background:#eef3fa;color:var(--blue);box-shadow:none}
+  .gpa-result{margin-top:12px;text-align:center;background:var(--green-light);border-radius:14px;padding:14px}
+  .gpa-result .big{font-size:34px;font-weight:800;color:var(--green)}
+  .gpa-result .det{font-size:11.5px;color:var(--sub);margin-top:4px}
+  .gpatab{width:100%;border-collapse:collapse;font-size:11px;margin-top:10px}
+  .gpatab td{border:1px solid var(--line);padding:4px;text-align:center}
+  .phg{margin-bottom:14px}
+  .phg h4{font-size:13px;color:var(--blue);margin:0 2px 8px;font-weight:700}
+  .ph{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#fff;border-radius:11px;margin-bottom:7px;border:1px solid var(--line)}
+  .ph .pic{width:34px;height:34px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .ph .pn{font-size:13.5px;font-weight:600} .ph .pd{font-size:11px;color:var(--sub)}
+  .ph a{margin-left:auto;background:var(--green);color:#fff;font-size:12px;padding:7px 12px;border-radius:9px;text-decoration:none;font-weight:600}
+  /* 问答 */
+  #chatList{display:flex;flex-direction:column;gap:12px;padding-bottom:6px}
+  .msg{display:flex;gap:8px;animation:fade .3s ease}
+  .msg .av{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .msg.ai .av{background:linear-gradient(135deg,var(--blue),var(--blue2))}
+  .msg .bub{padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.75;max-width:82%;word-break:break-word}
+  .msg.ai .bub{background:var(--card);border:1px solid var(--line);border-top-left-radius:4px;box-shadow:var(--sh)}
+  .msg.user{flex-direction:row-reverse}
+  .msg.user .av{background:var(--green);color:#fff;font-size:12px;font-weight:700}
+  .msg.user .bub{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-top-right-radius:4px}
+  .bub b{color:var(--blue)} .msg.user .bub b{color:#ffe08a}
+  .bub .tg{display:inline-block;background:var(--blue-light);color:var(--blue);font-size:11px;padding:1px 8px;border-radius:8px;margin-bottom:5px;font-weight:600}
+  .typing{display:inline-flex;gap:4px;align-items:center}
+  .typing i{width:6px;height:6px;border-radius:50%;background:#9db4cf;animation:bk 1.2s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes bk{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+  .qchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .qchip{background:#fff;border:1px solid var(--line);color:var(--blue);font-size:12px;padding:6px 12px;
+    border-radius:999px;cursor:pointer;transition:.15s;box-shadow:0 2px 8px rgba(10,77,162,.06)}
+  .qchip:active{background:var(--blue-light)}
+  .input-bar{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    width:100%;max-width:480px;padding:10px 12px;display:flex;gap:8px;z-index:20}
+  .input-bar input{flex:1;border:1px solid var(--line);border-radius:999px;padding:11px 16px;font-size:14px;outline:none;background:#fff;box-shadow:var(--sh)}
+  .input-bar input:focus{border-color:var(--blue)}
+  .send{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;color:#fff;font-size:17px;
+    background:linear-gradient(135deg,var(--blue),var(--blue2));box-shadow:0 4px 14px rgba(10,77,162,.35)}
+  .send:active{transform:scale(.9)}
+  /* 攻略 */
+  .pbar{display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:12px 14px;box-shadow:var(--sh);border:1px solid var(--line)}
+  .pbar .track{flex:1;height:10px;background:#e8eef6;border-radius:99px;overflow:hidden}
+  .pbar .fill{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .5s}
+  .pbar .num{font-size:14px;font-weight:800;color:var(--blue)}
+  .tl{position:relative;padding-left:22px;margin-top:4px}
+  .tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--blue),var(--green));border-radius:2px}
+  .ti{position:relative;padding:0 0 15px 10px}
+  .ti::before{content:"";position:absolute;left:-20px;top:4px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--blue)}
+  .ti:first-child::before{background:var(--blue)}
+  .ti h5{font-size:13.5px} .ti p{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.6}
+  .grp{margin-top:12px} .grp h4{font-size:13px;color:var(--sub);margin:0 2px 8px}
+  .ck{display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border-radius:12px;margin-bottom:8px;
+    cursor:pointer;border:1px solid var(--line);transition:.15s;font-size:13.5px}
+  .ck:active{transform:scale(.98)}
+  .ck .bx{width:20px;height:20px;border-radius:6px;border:2px solid #c4d2e2;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}
+  .ck.done{background:var(--green-light);border-color:#c9ecdd}
+  .ck.done .bx{background:var(--green);border-color:var(--green)}
+  .ck.done span{text-decoration:line-through;color:#9aa8b8}
+  .todobar{display:flex;gap:8px;margin-bottom:10px}
+  .todobar input{flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 14px;font-size:13.5px;outline:none;background:#fff;box-shadow:var(--sh)}
+  .todobar .add{width:46px;flex-shrink:0;border:none;border-radius:11px;background:var(--blue);color:#fff;font-size:20px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(10,77,162,.3)}
+  .todobar .add:active{transform:scale(.92)}
+  .ck .del{margin-left:auto;width:24px;height:24px;border-radius:8px;border:none;background:#fdecec;color:#e05656;font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .ck .del:active{transform:scale(.9)}
+  .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+    background:rgba(255,255,255,.94);backdrop-filter:blur(14px);display:flex;z-index:30;
+    border-top:1px solid var(--line);padding:6px 0 calc(env(safe-area-inset-bottom) + 2px)}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0;border:none;background:none;
+    font-size:10px;color:#9aa8b8;cursor:pointer;transition:.2s}
+  .tab .ico{font-size:21px;transition:transform .2s}
+  .tab.on{color:var(--blue);font-weight:700}
+  .tab.on .ico{transform:translateY(-2px) scale(1.14)}
+  footer{font-size:10.5px;color:#a5b3c4;text-align:center;line-height:1.8;padding:18px 0 6px}
+</style>
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.css"/>
+<script src="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>window.L||document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\/script>')</script>
+<script>window.L||document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>')</script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="logo">🎓</div>
+      <div><h1>重大百晓生</h1><p>重庆大学校园智能体 · AI开学季参赛作品</p></div>
+    </div>
+    <div class="search">
+      <span class="si">🔍</span>
+      <input id="gs" placeholder="搜地点、校车、电话、问题…" oninput="globalSearch(this.value)">
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- 首页 -->
+    <section class="page active" id="page-home">
+      <div class="banner" onclick="go('bus')">
+        <div class="em">🚌</div>
+        <div><h3>校车 · 下一班几点？</h3><p>按官方时刻表实时计算最近班次</p></div>
+        <div class="go">›</div>
+      </div>
+      <div class="sec">核心功能 <span>点击进入</span></div>
+      <div class="tiles">
+        <div class="tile" onclick="go('map')"><div class="ic" style="background:var(--blue-light)">🗺️</div><h3>互动校园地图</h3><p>真实地图 · 点击标记看详情</p></div>
+        <div class="tile" onclick="go('bus')"><div class="ic" style="background:var(--green-light)">🚌</div><h3>校车时刻</h3><p>沙↔虎溪 下一班计算</p></div>
+        <div class="tile" onclick="go('tools')"><div class="ic" style="background:var(--purple-light)">🧮</div><h3>实用工具</h3><p>四分制绩点 · 电话速查</p></div>
+        <div class="tile" onclick="go('chat')"><div class="ic" style="background:var(--orange-light)">💬</div><h3>AI 问答</h3><p>校园生活百事通</p></div>
+        <div class="tile" onclick="go('guide')"><div class="ic" style="background:var(--pink-light)">🧳</div><h3>新生攻略</h3><p>报到清单逐项勾选</p></div>
+        <div class="tile" onclick="go('chat');send('介绍一下重大百晓生')"><div class="ic" style="background:#eaf6ff">ℹ️</div><h3>关于作品</h3><p>功能与参赛说明</p></div>
+      </div>
+      <footer>重庆大学AI开学季 · 校园智能体创新征集赛 ｜ 赛道：校园攻略<br>
+      数据整理自重庆大学官方信息，变动以学校最新通知为准</footer>
+    </section>
+
+    <!-- 地图 -->
+    <section class="page" id="page-map">
+      <div class="sec">选择校区</div>
+      <div class="seg" id="campusSeg"></div>
+      <div class="chips" id="catChips"></div>
+      <div class="legend" id="mapLegend"></div>
+      <button class="mbtn" id="measureBtn" onclick="toggleMeasure()">📏 测距</button>
+      <div class="measure-hint" id="measureHint"></div>
+      <div class="campus-intro" id="campusIntro"></div>
+      <div class="mapbox" id="mapbox"></div>
+      <div class="pill-row" id="mapPills"></div>
+      <div class="note">🗺️ 底图为<b>高德真实地图</b>，所有标记经真实坐标配准，<b>落在真实楼位</b>（基于校门/图书馆等真实控制点仿射配准，误差约数十米）。可直接<b>双指/滚轮缩放、拖动</b>浏览；彩色圆点为可点击标记，点它弹出地点详情；顶部「📏 测距」点两点显示<b>真实地理距离</b>；分类筛选隐藏无关标记。下方列表按文字浏览全部地点。</div>
+    </section>
+
+    <!-- 校车 -->
+    <section class="page" id="page-bus">
+      <div class="sec">校车方向</div>
+      <div class="seg" id="busDir"></div>
+      <select id="busStop" onchange="renderBus()"></select>
+      <div id="nextBus" style="margin-top:12px"></div>
+      <div class="sec">完整时刻表 <span id="busNote"></span></div>
+      <div id="busTable"></div>
+      <div class="sec">专线班次</div>
+      <div id="xRoutes"></div>
+      <div class="note">本时刻表自 2026年9月3日 起执行。监督电话 15803050866 / 023-65678751；沙坪坝站务 15803050840；科学城站务 15803050871；失物招领 15803050840。始发车提前15分钟到位，乘车请出示校园卡。运行时刻可能调整，以学校最新通知为准。</div>
+    </section>
+
+    <!-- 工具 -->
+    <section class="page" id="page-tools">
+      <div class="sec">GPA / 绩点计算器（四分制）</div>
+      <div class="card">
+        <div id="gpaRows"></div>
+        <button class="btn ghost" onclick="addGpaRow()" style="margin-top:6px">＋ 添加一门课程</button>
+        <button class="btn" onclick="calcGpa()">计算平均绩点</button>
+        <div id="gpaOut"></div>
+        <table class="gpatab">
+          <tr><td>90及以上</td><td>89</td><td>85</td><td>80</td><td>75</td><td>70</td><td>65</td><td>60</td><td>&lt;60</td></tr>
+          <tr><td>4.0</td><td>3.9</td><td>3.5</td><td>3.0</td><td>2.5</td><td>2.0</td><td>1.5</td><td>1.0</td><td>0</td></tr>
+        </table>
+        <div class="note">四分制：60分=1.0，之后每1分+0.1（61=1.1 … 89=3.9），90分及以上均为满绩 4.0；60分以下为 0（挂科）。<br>平均绩点 GPA = Σ(课程学分 × 课程绩点) / Σ学分。</div>
+      </div>
+      <div class="sec">常用电话速查</div>
+      <div id="phoneList"></div>
+      <div class="note">点击右侧按钮可直接拨号（手机端），网址可长按复制。</div>
+    </section>
+
+    <!-- 问答 -->
+    <section class="page" id="page-chat">
+      <div class="sec">AI 问答 <span>支持模糊提问</span></div>
+      <div id="chatList"></div>
+      <div class="qchips" id="hotChips" style="margin-top:8px">
+        <div class="qchip" onclick="send(this.textContent)">食堂推荐</div>
+        <div class="qchip" onclick="send(this.textContent)">图书馆几点开门</div>
+        <div class="qchip" onclick="send(this.textContent)">怎么选课</div>
+        <div class="qchip" onclick="send(this.textContent)">快递在哪取</div>
+        <div class="qchip" onclick="send(this.textContent)">新生报到流程</div>
+        <div class="qchip" onclick="send(this.textContent)">校园网怎么连</div>
+      </div>
+    </section>
+
+    <!-- 攻略 -->
+    <section class="page" id="page-guide">
+      <div class="sec">入学报到流程</div>
+      <div class="card"><div class="tl" id="guideTL"></div></div>
+      <div class="sec">行李清单 <span id="pgTxt"></span></div>
+      <div class="pbar" style="margin-bottom:4px"><div class="track"><div class="fill" id="pFill"></div></div><div class="num" id="pNum">0%</div></div>
+      <div id="checklist"></div>
+      <div style="text-align:center;margin-top:10px"><div class="qchip" onclick="resetCheck()">↺ 重置全部勾选</div></div>
+
+      <div class="sec" style="margin-top:20px">📝 我的专属清单 <span id="todoTxt" style="font-weight:400;color:var(--sub);font-size:11px"></span></div>
+      <div class="todobar">
+        <input id="todoInput" placeholder="添加一条待办，如「找辅导员签字」" onkeydown="if(event.key==='Enter')addTodo()">
+        <button class="add" onclick="addTodo()">＋</button>
+      </div>
+      <div id="todoList"></div>
+      <div id="todoEmpty" style="text-align:center;font-size:12px;color:var(--sub);padding:8px 0 2px">还没有自定义待办，上面加一条试试 👆</div>
+      <div style="text-align:center;margin-top:4px"><div class="qchip" onclick="clearTodo()">🗑 清空我的清单</div></div>
+      <footer>行李清单勾选与专属待办都自动保存在本机，关掉页面也不会丢～</footer>
+    </section>
+  </main>
+
+  <div class="input-bar" id="inputBar" style="display:none">
+    <input id="chatInput" placeholder="问我任何校园问题…" onkeydown="if(event.key==='Enter')sendInput()">
+    <button class="send" onclick="sendInput()">➤</button>
+  </div>
+
+  <!-- 地点信息面板 -->
+  <div class="mask" id="mask" onclick="closeInfo()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sh-head">
+      <div class="sh-em" id="shEm"></div>
+      <div><h3 id="shName"></h3><div id="shTags" style="margin-top:3px"></div></div>
+      <button class="sh-x" onclick="closeInfo()">✕</button>
+    </div>
+    <p id="shDesc"></p>
+    <div class="tip" id="shTip"></div>
+  </div>
+
+  <nav class="tabbar">
+    <button class="tab on" data-page="home" onclick="go('home')"><span class="ico">🏠</span>首页</button>
+    <button class="tab" data-page="map" onclick="go('map')"><span class="ico">🗺️</span>地图</button>
+    <button class="tab" data-page="bus" onclick="go('bus')"><span class="ico">🚌</span>校车</button>
+    <button class="tab" data-page="tools" onclick="go('tools')"><span class="ico">🧮</span>工具</button>
+    <button class="tab" data-page="chat" onclick="go('chat')"><span class="ico">💬</span>问答</button>
+    <button class="tab" data-page="guide" onclick="go('guide')"><span class="ico">🧳</span>攻略</button>
+  </nav>
+</div>
+
+<script>
+/* ============================================================
+ * 重大百晓生 · 校园智能助手（校园攻略赛道）
+ * 数据来源：重庆大学官方交通车时刻表(2026.9.3起) / 官方校区平面图 / 校区常用电话
+ * 架构：纯前端单文件 H5；callLLM() 预留腾讯 WorkBuddy 大模型接入
+ * ============================================================ */
+
+/* ---------- 互动地图数据：底图 + 可点击地点 ----------
+ * hot: [名称, 类别, 图标, x%, y%, 简介, 贴士]（坐标依官方平面图定位） */
+const CAMPUSES=['虎溪校区','A区','B区','C区'];
+const CATS=['全部','教学','餐饮','生活','运动','风景'];
+const CCAT={'教学':'c-jx','餐饮':'c-cy','生活':'c-sh','运动':'c-yd','风景':'c-fj'};
+const LEGCOLOR={'教学':'#3e86d6','餐饮':'#f5921e','生活':'#8f6cf0','运动':'#28bd93','风景':'#2bb3ab'};
+const MAPS={
+'虎溪校区':{intro:'<b>虎溪校区（科学城校区）</b>：2005年启用，占地约3800亩，位于大学城南路55号，是本科一、二年级主校区。以现代化教学楼、缙湖·云湖景观带和竹/梅/松/兰书院式宿舍园区闻名；校园东北角正对熙街商圈。',hot:[
+  ['北大门','风景','🚪',62.6,6.3,'虎溪北大门，正对大学城熙街商圈与四川美术学院。','出北大门即达熙街'],
+  ['东大门','风景','🚪',91,33,'虎溪东大门，四根石柱仪式感十足。','毕业照打卡点'],
+  ['南门','风景','🚪',72.6,64.3,'虎溪南门。',''],
+  ['西大门','风景','🚪',16,20,'虎溪西侧出入口。',''],
+  ['西二门','风景','🚪',15.8,45,'西二门，靠近学生生活区。',''],
+  ['西三门','风景','🚪',15.8,64,'西三门，通往后山步道方向。',''],
+  ['竹园','生活','🏡',33,8,'宿舍园区，紧邻第一学生食堂。',''],
+  ['梅园','生活','🏡',56.5,10,'宿舍园区。',''],
+  ['松园','生活','🏡',28,26.5,'宿舍园区。',''],
+  ['兰园','生活','🏡',55,73,'宿舍园区，临近运动场。','一卡通服务网点所在'],
+  ['松园(三期)','生活','🏡',36.5,85.7,'宿舍园区三期，设施较新。',''],
+  ['第一学生食堂','餐饮','🍚',47,13.2,'窗口最多的大食堂，性价比高。','避开11:40–12:20高峰'],
+  ['第二学生食堂','餐饮','🌶️',30.6,22.5,'麻辣香锅与自选称重出名。','香锅窗口饭点爆满'],
+  ['第三学生食堂（兰园食堂）','餐饮','🍚',55.7,65.2,'兰园宿舍区食堂，在学生活动中心东侧。',''],
+  ['体育场','运动','🏟️',74.6,12.5,'标准田径场，早操、体测、夜跑都在这。','晚9点后是夜跑高峰'],
+  ['体育中心','运动','🏟️',86,10.5,'虎溪校区体育中心，室内球类场馆。','热门时段提前预约'],
+  ['田径场','运动','🏃',27,34.7,'校内田径运动场。',''],
+  ['游泳馆','运动','🏊',21.4,34,'室内游泳馆。','自带泳帽泳镜'],
+  ['网球场','运动','🎾',68.2,56.4,'兰园北侧室外网球场。','可线上订场'],
+  ['足球场','运动','⚽',20.2,70,'西南侧标准足球场，日常训练场地。',''],
+  ['篮球场','运动','🏀',24.7,69,'室外篮球场群，紧邻足球场。','夜场灯光到22点'],
+  ['图书馆','教学','🗼',66.5,49.2,'虎溪图书馆，位于缙湖、云湖之畔；2008年始建、2010年投用，约3.6万㎡、藏106万册。“L”形造型如一本打开的红皮书。内含松园书屋（人气最高）、方志图书馆、科幻图书馆等分馆。','一般8:00–22:30，考试周早占座'],
+  ['第二实验楼','教学','⚗️',55.8,54,'公共实验教学楼。','实验课按班级排课'],
+  ['第三实验楼','教学','⚗️',76.5,42.8,'公共实验教学楼。',''],
+  ['理科楼','教学','🔬',43,62.5,'理科楼群，校车虎溪乘车站旁。',''],
+  ['学生活动中心','生活','🎪',51,62.5,'学生活动与办事服务场所，社团活动集中地。','百团大战主场地之一'],
+  ['大剧院','风景','🎬',52.8,59.8,'校内大剧院，演出与晚会场地。','关注校内演出信息'],
+  ['第一实验楼','教学','⚗️',79.1,29.5,'公共实验教学平台。','实验课按班级排课'],
+  ['虎溪校区综合大楼','教学','🏢',89,23.5,'校区综合办公大楼。',''],
+  ['工科楼','教学','🏛️',32,62.5,'工科楼群（含工科楼二期·国家技术产教融合创新大楼）。',''],
+  ['工科实验大楼','教学','🏗️',36,71,'工科实验平台。',''],
+  ['缙湖·云湖','风景','🌊',69.1,37.2,'环湖景观带，依山傍水，散步自习好去处。','湖畔看晚霞']
+ ]},
+'A区':{intro:'<b>A区（沙坪坝校区A区）</b>：沙正街174号，重大历史最悠久的校区、民国建校原址。拥有主教楼、文字斋、民主湖等历史地标，是理工科与研究生培养重镇，经地下通道与B区相连。',hot:[
+  ['思群广场','运动','🏟️',42.5,56.6,'A区主体育场（大田径场），升旗与开学典礼在此。','夜跑好去处'],
+  ['田径场','运动','🏃',48.5,37.6,'北侧田径场。',''],
+  ['网球场','运动','🎾',41.4,31.1,'网球场群，可线上订场。',''],
+  ['民主湖','风景','🌊',54.5,66.7,'A区核心景观湖，重大人的“精神地标”，环湖散步看晚霞、拍毕业照都来这。','虎溪对应的是缙湖、云湖'],
+  ['民主湖报告厅','教学','🎤',60.4,58.1,'湖畔报告厅，讲座与发布会场地。',''],
+  ['图书馆','教学','📚',44,47,'A区逸夫楼图书馆（理工图书馆），1930年建馆，2014–2015年修缮为文艺复古风；藏中外文图书近百万册，含线装古籍约3000册、抗战版书刊4000余册。','闭馆前记得收拾物品'],
+  ['主教楼','教学','🏛️',62,45,'主教学楼，大课与考试常在此。','楼层高，提前出发'],
+  ['第一教学楼','教学','🏫',50.3,29.3,'公共教学楼。',''],
+  ['第二教学楼','教学','🏫',36.1,11.3,'教学楼，近教工食堂。',''],
+  ['第六教学楼','教学','🏫',24.5,53.3,'教学楼。',''],
+  ['第七教学楼','教学','🏫',39.1,19.7,'老教学楼。','教室分布复杂，提前探路'],
+  ['综合实验楼','教学','⚗️',22.5,26.5,'公共实验楼。',''],
+  ['煤矿灾害国家重点实验室','教学','🔬',17.5,46.7,'煤矿灾害动力学国家重点实验室（资源与安全学院科研平台）。',''],
+  ['能源与动力工程学院','教学','🎓',31,48,'能源与动力工程学院。',''],
+  ['机械传动国家重点实验室','教学','🔬',65.7,62.1,'机械传动国家重点实验室。',''],
+  ['经济与工商管理学院','教学','🎓',54.5,33.7,'经管学院。',''],
+  ['生物工程学院','教学','🎓',68.7,49,'生物工程学院。',''],
+  ['马克思主义学院','教学','🎓',63,55.9,'马克思主义学院。',''],
+  ['公共管理学院','教学','🎓',61.3,54.9,'公共管理学院。',''],
+  ['文字斋','风景','🪶',45.6,24.8,'历史建筑，古朴雅致，拍照打卡点。',''],
+  ['体育馆','运动','🏟️',76.3,57.4,'A区体育馆。','热门时段提前预约'],
+  ['风雨操场','运动','🏟️',73.0,54.2,'室内风雨操场。',''],
+  ['游泳池','运动','🏊',78.9,57.9,'夏季开放的游泳池。','自带泳帽泳镜'],
+  ['校史馆','风景','🏛️',73.8,56.7,'校史馆，了解重大百年历史。',''],
+  ['礼堂','教学','🏛️',71.5,69.9,'学校礼堂，大型活动与演出场地。',''],
+  ['停车库','生活','🅿️',59,76.2,'校内停车库。',''],
+  ['美视电影学院','教学','🎬',59.3,71.2,'美视电影学院。','常有作品展映'],
+  ['学生一食堂','餐饮','🍚',28.5,66.2,'A区学生食堂。',''],
+  ['学生三食堂','餐饮','🥘',52.8,84.5,'A区学生食堂。',''],
+  ['学生四食堂','餐饮','🍚',45,71.6,'A区学生食堂。',''],
+  ['学生三舍','生活','🛏️',43.1,66.7,'学生宿舍。',''],
+  ['学生九舍','生活','🛏️',55.6,86.9,'学生宿舍。','']
+ ]},
+'B区':{intro:'<b>B区（沙坪坝校区B区）</b>：沙北街83号，原重庆建筑大学。建筑城规、土木、环境、材料、法学等学科所在地，红砖老建筑群厚重典雅，与A区以地下通道相接。',hot:[
+  ['运动场','运动','🏟️',54.9,43.5,'B区标准田径运动场。','傍晚训练多'],
+  ['游泳池','运动','🏊',28,43,'夏季开放的游泳池。','自带泳帽泳镜'],
+  ['足球场','运动','⚽',56.8,42.5,'B区足球场，位于标准田径运动场内场。',''],
+  ['科学会堂','教学','🎤',74.9,25.6,'学术报告与讲座场地。','关注讲座通知'],
+  ['建筑馆','教学','🏛️',74.9,39.6,'建筑城规学院地标馆舍。','常有设计展'],
+  ['建工馆','教学','🏗️',67.0,48.4,'建筑工程系馆。',''],
+  ['图书馆','教学','📚',63.9,61.0,'B区图书馆，专业馆藏丰富。',''],
+  ['第一综合楼','教学','🏢',52.6,66.9,'综合教学楼。',''],
+  ['第二综合楼','教学','🏢',74.6,58.4,'大教室与考试常用楼。',''],
+  ['环境与生态学院','教学','🌿',86.7,59.7,'环境学科教学科研楼群。',''],
+  ['岩土馆','教学','⛏️',33.3,52.6,'岩土工程实验室。',''],
+  ['管理科学与房地产学院','教学','📊',63.9,70.5,'管理类学院楼。',''],
+  ['先进技术科学研究院','教学','🔬',53.2,74.4,'科研平台。',''],
+  ['机电楼','教学','⚡',44.5,62.3,'机电类教学楼。',''],
+  ['建筑材料工程实验楼','教学','🧱',36.4,59.4,'材料学科实验楼。',''],
+  ['结构实验室','教学','🏗️',21.7,54.5,'大型结构实验平台。',''],
+  ['振动台实验室','教学','⚙️',17.1,60.7,'振动台实验平台。',''],
+  ['环境与生态实验室','教学','🌿',25.7,61.4,'环境学科实验楼。',''],
+  ['防灾楼','教学','🛡️',30.1,54.5,'防灾减灾研究楼。',''],
+  ['博士后公寓','生活','🛏️',11.3,63.6,'博士后公寓。',''],
+  ['学生十宿舍','生活','🛏️',22.5,66.2,'学生宿舍。',''],
+  ['学生八宿舍','生活','🛏️',33.8,70.1,'学生宿舍。',''],
+  ['学生七宿舍','生活','🛏️',33.8,74.4,'学生宿舍。',''],
+  ['学生十二宿舍','生活','🛏️',24.9,76.0,'学生宿舍。',''],
+  ['学生浴室及锅炉房','生活','🚿',37.9,81.5,'学生浴室。',''],
+  ['学生六宿舍','生活','🛏️',48.6,81.5,'学生宿舍。',''],
+  ['学生四宿舍','生活','🛏️',23.1,83.1,'学生宿舍。',''],
+  ['学生三宿舍','生活','🛏️',30.6,85.1,'学生宿舍。',''],
+  ['学生食堂','餐饮','🍱',44.5,86.4,'B区学生食堂。','菜式家常'],
+  ['学生九宿舍','生活','🛏️',58.1,79.1,'学生宿舍。',''],
+  ['学生五宿舍','生活','🛏️',59.5,85.1,'学生宿舍。',''],
+  ['校医院','生活','🏥',85.8,44.2,'B区校医院。','门诊可刷医保'],
+  ['材料楼','教学','🧱',87.9,49.4,'材料科学与工程楼。',''],
+  ['科苑酒店','生活','🛎️',84.7,36.0,'校内酒店，访客住宿。','旺季提前订'],
+  ['档案馆','教学','🗂️',46.6,36,'校档案馆。','查学籍档案来这里'],
+  ['法学院','教学','⚖️',53.8,33.1,'法学院。',''],
+  ['重大幼儿园','生活','🧸',55.8,19.5,'附属幼儿园。',''],
+  ['老年活动中心','生活','🎻',60.4,14.0,'重大老年活动中心。',''],
+  ['地下通道出入口','风景','🚇',90.8,53.2,'连接A区与B区的地下通道出入口。','穿行两校区不晒雨淋'],
+  ['多功能风洞实验室','教学','🌬️',8,27.5,'重庆大学多功能风洞实验室。',''],
+  ['生命科学学院','教学','🎓',40.3,50.6,'生命科学学院。',''],
+  ['勤工助学楼','生活','💼',23.6,71.9,'勤工助学与兼职服务。','']
+ ]},
+'C区':{intro:'<b>C区（沙坪坝校区C区）</b>：渝碚路131号，原重庆建筑高等专科学校。紧邻渝州路，以第二教学大楼等紧凑教学楼群与宿舍生活区为主，校门外即公交站。',hot:[
+  ['正门','风景','🚪',44,10,'C区大门。',''],
+  ['校医院','生活','🏥',30.6,36.5,'C区校医院。','就近就医'],
+  ['教工宿舍区','生活','🏘️',19.5,39.5,'教职工宿舍区。',''],
+  ['第六教学楼','教学','🏫',42.7,36.1,'C区教学楼。',''],
+  ['公共教学实验平台','教学','⚗️',48,38,'公共教学实验室及研究平台。',''],
+  ['运动场','运动','🏟️',25.7,59.5,'C区标准运动场。','傍晚有人约球'],
+  ['研究楼','教学','🔬',43.5,54.5,'科研楼。',''],
+  ['办公楼','教学','🏢',59.5,42.8,'C区行政办公。',''],
+  ['第一教学楼','教学','🏫',68.5,42.3,'C区教学楼。',''],
+  ['三舍学生宿舍','生活','🛏️',58.2,48.0,'学生宿舍。',''],
+  ['四舍学生宿舍','生活','🛏️',64.2,48.5,'学生宿舍。',''],
+  ['食堂·超级市场','餐饮','🍚',75.7,47,'C区食堂，附超级市场。',''],
+  ['第二教学大楼','教学','🏛️',52.8,52.4,'C区主教学大楼，大课与考试场地。',''],
+  ['第三教学楼','教学','🏫',43.5,63.8,'C区教学楼。',''],
+  ['第四教学楼','教学','🏫',45.0,76.0,'C区教学楼。',''],
+  ['第七教学楼','教学','🏫',31.5,71.6,'C区教学楼。',''],
+  ['学生一舍','生活','🛏️',58.5,62.4,'学生宿舍。',''],
+  ['学生五公寓','生活','🛏️',60.4,72.2,'学生公寓。',''],
+  ['公交车站','风景','🚌',51,86,'C区大门外公交站，往返沙坪坝方向。',''],
+  ['学生二舍','生活','🛏️',47.8,83.2,'学生宿舍。','']
+ ]}
+};
+
+/* ---------- 真实数据：校车时刻表（2026年9月3日起执行） ---------- */
+const SHUTTLE={
+ '沙坪坝→虎溪':{sunday:['07:20','07:40'],stops:{
+   'A校园钟塔':['07:25','07:45','08:15','09:15','10:35','11:35','12:25','13:15','14:05','14:50','15:25','16:25','17:25','17:55','18:25','19:35','20:35','21:05','21:55'],
+   'A校园后门':['07:20','07:40','08:10','09:10','10:30','11:30','12:20','13:10','14:00','14:45','15:20','16:20','17:20','17:50','18:20','19:30','20:30','21:00','21:50'],
+   'B校园主席像':['07:25','07:50','08:20','09:20','10:40','11:40','12:30','13:20','14:10','14:55','15:30','16:30','17:30','18:00','18:30','19:40','20:40','21:10','22:00'],
+   'C校园大门':['07:35','08:00','08:30','09:30','10:50','11:50','12:40','13:30','14:20','15:05','15:40','16:40','17:40','18:10','18:40','19:50','20:50','21:20','22:10']}},
+ '虎溪→沙坪坝':{sunday:['07:10','07:40'],stops:{
+   '虎溪乘车站':['07:20','07:50','08:20','09:20','10:30','11:30','12:20','13:00','14:00','14:45','15:30','16:20','17:25','17:50','18:20','19:45','20:30','21:00','21:50'],
+   '理科楼':['07:15','07:45','08:15','09:15','10:25','11:25','12:15','12:55','13:55','14:40','15:25','16:15','17:20','17:45','18:15','19:40','20:25','20:55','21:45'],
+   '虎溪花园南':['07:12','07:42','08:12','09:12','10:22','11:22','12:12','12:52','13:52','14:37','15:22','16:12','17:17','17:42','18:12','19:37','20:22','20:52','21:42'],
+   '科学中心(虎溪花园北)':['07:10','07:40','08:10','09:10','10:20','11:20','12:10','12:50','13:50','14:35','15:20','16:10','17:15','17:40','18:10','19:35','20:20','20:50','21:40']}}
+};
+/* 专线（静态展示）：* 为周末及节假日运行班次 */
+const XROUTES=[
+ {name:'虎溪校园 ↔ 超瞬态实验室',note:'带 * 班次为周末及节假日运行班次',
+  head:['虎溪乘车站','理科楼','超瞬态实验室','嘉陵江实验室(返)'],
+  rows:[['8:30','8:32','8:50','8:53'],['9:10*','9:12*','11:30*','11:33*'],['14:10*','14:12*','14:40*','14:43*'],['17:00','17:02','17:30','17:33'],['18:40','18:42','21:10*','21:13*'],['—','—','22:20','22:23']]},
+ {name:'科学城校区、A校园 ↔ 国家卓越工程师学院',note:'周末及节假日不运行',
+  head:['虎溪花园北(科学中心)','虎溪乘车站','卓越学院','A校园钟塔(A线)','卓越学院(A线)'],
+  rows:[['7:05','7:10','8:40','7:10','8:40'],['15:55','16:00','17:30','16:00','17:30']]}
+];
+
+/* ---------- 真实数据：常用电话 / 网址 ---------- */
+const PHONES=[
+ {g:'虎溪校区',items:[
+   ['校区管委会','023-65678008'],['校园保卫办','023-65678110'],['校医院门诊','023-65678323'],
+   ['校医院急救','023-65678120'],['校园物业','023-65671111'],['图书馆','023-65678060'],
+   ['一卡通(松园六栋)','023-65678188']]},
+ {g:'沙坪坝校区(A/B/C)',items:[
+   ['校医院(A区)','023-65120120'],['保卫处','023-65100110'],['户政/通行','023-65110067'],
+   ['一卡通服务','023-65111500'],['一卡通(A区)','023-65112096'],['一卡通(B区)','023-65120874'],
+   ['一卡通(C区)','023-65118144']]},
+ {g:'校车服务',items:[
+   ['交通车监督','023-65678751'],['校车队(包车)','15803050868'],
+   ['沙坪坝站务','15803050840'],['科学城站务','15803050871'],['校车失物招领','15803050840']]},
+ {g:'常用网址',items:[
+   ['一卡通查询','ykt.cqu.edu.cn'],['教务系统','jx.cqu.edu.cn'],['学校官网','cqu.edu.cn']]}
+];
+
+/* ---------- 新生报到流程 & 清单 ---------- */
+const GUIDE=[
+ ['抵达校区','按录取通知书指定校区报到；开学季车站有学长学姐接站，认准「重庆大学」引导牌。'],
+ ['学院迎新点报到','出示录取通知书与身份证，核验信息、领材料袋，完成电子注册。'],
+ ['宿舍入住','凭报到单到宿舍楼值班室领钥匙，检查家具设施并登记。'],
+ ['校园卡激活','迎新点或一卡通中心激活，绑定充值后食堂、淋浴、门禁通用。'],
+ ['体检与资格复查','按学院通知时间段去校医院，带证件照与体检表。'],
+ ['开学典礼 / 入学教育','聆听校长第一课，参加学院入学教育与选课说明会。']
+];
+const LIST=[
+ {g:'📑 证件资料',items:['录取通知书','身份证及复印件','户口迁移证(如需)','一寸/两寸证件照若干','高考档案袋(勿拆封)','随通知书银行卡']},
+ {g:'🛏️ 宿舍生活',items:['床上三件套(1.2m床)','蚊帐/床帘','插线板(带USB)','衣架/挂钩/收纳盒','洗漱用品与水桶','拖鞋(浴室防滑)','常备药品']},
+ {g:'💻 学习装备',items:['笔记本电脑','U盘/移动硬盘','耳机','护眼台灯','笔记本文具','背包']},
+ {g:'📱 数字绑定',items:['下载「今日校园」APP','关注「重庆大学」公众号','绑定校园卡充值','办理校园手机卡(可选)','加入班级新生群']}
+];
+
+/* ---------- AI 问答知识库 ---------- */
+const KB=[
+ {tags:['食堂','吃饭','餐厅','美食','好吃','饭菜'],title:'食堂攻略',
+  a:'<span class="tg">🍚 食堂攻略</span><br><b>虎溪</b>：一食堂窗口多、二食堂麻辣香锅/自选称重。<br><b>A区</b>：三食堂、清真窗口；<b>B/C区</b>也有学生食堂。<br>💡 避开 11:40–12:20 高峰；饭卡/微信/支付宝都能刷。'},
+ {tags:['图书馆','自习','借书','看书','通宵'],title:'图书馆指南',
+  a:'<span class="tg">📚 图书馆</span><br><b>虎溪图书馆</b>：缙湖、云湖之畔的“钟塔”地标，2008始建、2010投用，约3.6万㎡、藏106万册，“L”形如打开的红皮书；含松园书屋、方志/科幻图书馆等分馆，座位可小程序预约，一般 8:00–22:30。<br><b>A区逸夫楼图书馆</b>：1930年建馆的理工图书馆，文艺复古风，藏有古籍与抗战版书刊；<b>B/C区</b>也各有图书馆。'},
+ {tags:['校车','班车','通勤','虎溪到a区','交通车'],title:'校车通勤',
+  a:'<span class="tg">🚌 校车</span><br>沙坪坝(A/B/C)↔虎溪每方向<b>每天19班</b>，约30–60分钟一班，凭校园卡乘坐；首两班(07:20/07:40)周日及节假日停运。另有虎溪↔超瞬态实验室、科学城/A区↔国家卓越工程师学院专线。<br>💡 去「校车」页用<b>下一班计算器</b>看最近班次；失物招领 15803050840。'},
+ {tags:['选课','抢课','退课','教务','课表'],title:'选课攻略',
+  a:'<span class="tg">🗓️ 选课</span><br>登录教务系统 <b>jx.cqu.edu.cn</b>。第一轮随缘、第二轮补退选拼手速；先修必修再排通识/体育；热门体育课开抢秒空，备好候选。'},
+ {tags:['快递','驿站','取件','包裹','菜鸟','邮'],title:'快递收发',
+  a:'<span class="tg">📦 快递</span><br>虎溪快递集中生活区菜鸟驿站/近邻宝。地址填<b>重庆市沙坪坝区重庆大学虎溪校区</b>；取件凭取件码，退货寄件在驿站办理。'},
+ {tags:['校园卡','饭卡','充值','一卡通','水卡'],title:'校园卡',
+  a:'<span class="tg">💳 校园卡</span><br>食堂/淋浴/门禁/校车通用。充值：「今日校园」APP 或公众号「重庆大学一卡通」。<br>网点：虎溪松园六栋65678188；A区65112096、B区65120874、C区65118144。丢了先挂失再补办。'},
+ {tags:['宿舍','寝室','空调','热水','洗澡','门禁','熄灯'],title:'宿舍生活',
+  a:'<span class="tg">🛏️ 宿舍</span><br>多为上床下桌四人间，独立卫浴、空调覆盖。热水淋浴刷卡/APP计费；门禁约23:30，注意晚归登记；禁用违规电器。报修找楼管或物业65671111。'},
+ {tags:['运动','体育','健身','体育馆','游泳','操场','球场'],title:'运动场馆',
+  a:'<span class="tg">🏸 运动</span><br>虎溪：体育场、体育馆、网球馆、兰园运动场；A区：思群广场、体育部；B区：足球场、游泳池。订场走「体育场馆预约」系统。'},
+ {tags:['医院','生病','看病','药店','药','发烧','校医院'],title:'就医指南',
+  a:'<span class="tg">🏥 就医</span><br>虎溪校医院门诊65678323/急救65678120；A区65120120；B/C区均设校医院。小病刷校园卡/医保；重症转诊三甲。新生医保统一办理。'},
+ {tags:['社团','招新','活动','学生会','兴趣'],title:'社团生活',
+  a:'<span class="tg">🎪 社团</span><br>上百个社团，开学季「百团大战」招新（学生文体中心一带）。建议1兴趣+1技能型，甄别收费可疑社团。'},
+ {tags:['军训','教官','队列'],title:'军训须知',
+  a:'<span class="tg">🪖 军训</span><br>新生军训约2周。必备：防晒、大水杯、软鞋垫、藿香正气液；不适及时打报告。'},
+ {tags:['报到','开学','新生','注册','入学','迎新'],title:'新生报到',
+  a:'<span class="tg">🎒 报到</span><br>带齐通知书、身份证、档案、证件照。流程：抵达→学院注册→宿舍入住→校园卡激活→体检。<br>👉 去「攻略」页有可勾选清单与流程时间线。'},
+ {tags:['成绩','绩点','考试','挂科','补考','重修','gpa'],title:'成绩与绩点',
+  a:'<span class="tg">📝 绩点（四分制）</span><br>重大采用四分制：60分=1.0，之后每1分加0.1（61=1.1…89=3.9），90分及以上均为满绩 4.0；60分以下记0（挂科）。<br>💡 去「工具」页用 GPA 计算器按学分加权算平均绩点。'},
+ {tags:['奖学金','助学金','资助','贷款','贫困','勤工俭学','补助'],title:'奖助学金',
+  a:'<span class="tg">💰 奖助</span><br>国家/励志/综合奖学金及专项奖助每学年评定；困难生可申请助学金、助学贷款、勤工助学岗，绿色通道保入学。'},
+ {tags:['校园网','wifi','网络','网费','宽带','连不上'],title:'校园网',
+  a:'<span class="tg">📶 校园网</span><br>连 CQU-WiFi，学号+门户密码登录；宿舍有校园宽带。数据库走校园网免费，校外连 VPN。网费在自助系统充值。'},
+ {tags:['打印','复印','资料','论文'],title:'打印服务',
+  a:'<span class="tg">🖨️ 打印</span><br>生活区/教学楼打印店支持扫码自助；图书馆有自助打印复印机，刷校园卡结算。'},
+ {tags:['失物','丢了','捡到','遗失'],title:'失物招领',
+  a:'<span class="tg">🔎 失物</span><br>先回最后出现地点服务台；再发校园墙/年级群；保卫处与楼管也接收拾物。校车失物招领电话 <b>15803050840</b>。'},
+ {tags:['轻轨','地铁','出行','市区','高铁站','机场','出去'],title:'出行交通',
+  a:'<span class="tg">🚇 出行</span><br>虎溪：北门外是熙街，再往北为1号线「大学城/尖顶坡」站，直达解放碑约50分钟；A区临1号线沙坪坝站，高铁站步行可达。用「渝畅行」扫码乘车。'},
+ {tags:['小白','小绿','校内','穿梭'],title:'校内穿梭车',
+  a:'<span class="tg">🚌 校内车</span><br>虎溪校区“小白”：08:00–22:00循环跑，支付宝/微信扫码；A、B校区间有1929号“小绿”。'},
+ {tags:['洗衣','洗衣服','烘干'],title:'洗衣服务',
+  a:'<span class="tg">🧺 洗衣</span><br>宿舍楼公共洗衣房扫码洗衣机/烘干机，3–5元/次。周日晚上高峰，建议错峰。'},
+ {tags:['地图','在哪','怎么去','位置','路线','教学楼在哪'],title:'地图找地方',
+  a:'<span class="tg">🗺️ 校园地图</span><br>去「地图」页是<b>高德真实地图</b>，所有地点标记经真实坐标配准、<b>落在真实楼位</b>，可切换虎溪/A/B/C 四大校区，<b>点击地图上彩色标记</b>即可查看地点详情与小贴士；顶部「📏 测距」可点地图两点测真实直线距离，每个校区顶部还有<b>校区简介</b>；搜索框也能直接搜地点名。'},
+ {tags:['你好','hi','hello','在吗','嗨'],title:'打招呼',
+  a:'你好呀，我是<b>重大百晓生</b> 🤖 校园吃住行学都能问，比如「食堂推荐」「校车下一班」「怎么选课」。'},
+ {tags:['你是谁','介绍','名字','能干什么','功能'],title:'关于我',
+  a:'我是<b>重大百晓生</b>——校园攻略赛道 AI 校园智能体 🎓<br>功能：①四大校区<b>官方平面图互动地图</b>（点击建筑看详情） ②校车下一班计算（官方时刻表） ③四分制GPA计算/电话工具 ④AI问答 ⑤新生攻略。'},
+ {tags:['谢谢','感谢','thanks'],title:'致谢',
+  a:'不客气，祝你在重大学习顺利、生活愉快 🎉 有问题随时找我！'}
+];
+const FALLBACK='这个问题我还在学习中 🤔 可以先试试这些热门问题，或换个说法问我：';
+
+/* ---------- 大模型接入层（预留 WorkBuddy） ---------- */
+function callLLM(q){ return null; }
+
+/* ---------- 路由 ---------- */
+const PAGES=['home','map','bus','tools','chat','guide'];
+function go(p){
+  PAGES.forEach(x=>document.getElementById('page-'+x).classList.toggle('active',x===p));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.page===p));
+  document.getElementById('inputBar').style.display=p==='chat'?'flex':'none';
+  document.getElementById('main').scrollTop=0;
+  if(p==='chat'&&!document.getElementById('chatList').children.length)
+    addMsg('ai','你好，我是<b>重大百晓生</b> 🤖<br>食堂、校车、选课、快递…<b>一句话问到答案</b>。点标签或直接输入吧！');
+  if(p==='map'){
+    if(!document.getElementById('campusSeg').children.length)renderMap();
+    else setTimeout(()=>{if(map)map.invalidateSize();},60);
+  }
+  if(p==='bus'&&!document.getElementById('busDir').children.length)renderBus();
+  if(p==='tools'&&!document.getElementById('gpaRows').children.length)initTools();
+}
+
+/* ---------- 全局搜索 ---------- */
+function globalSearch(q){
+  q=(q||'').trim();
+  if(!q){ if(!document.getElementById('page-home').classList.contains('active'))go('home'); return; }
+  go('map'); renderMap(q);
+}
+
+/* ---------- 互动地图：Leaflet + 高德真实地图（标记经仿射配准落在真实楼位） ---------- */
+let curCampus='虎溪校区',curCat='全部',_kw='';
+/* 真实控制点 [x%, y%, 纬度, 经度]：取自高德/腾讯地图真实POI坐标（GCJ-02，与高德底图同坐标系）。
+   通过最小二乘相似变换（旋转+等比缩放+平移）把平面图百分比坐标精确映射为真实经纬度，
+   使每个建筑标记落在真实楼位（验证残差约数十米）。 */
+const CTRL={
+  '虎溪校区':[[62.6,6.3,29.598365,106.30108],[91,33,29.594179,106.306541],[16,20,29.595717,106.292736],[15.8,64,29.588471,106.292131]],
+  'A区':[[44,47,29.565402,106.46834],[62,45,29.565793,106.470635],[60.4,58.1,29.564025,106.470411]],
+  'B区':[[63.9,61.0,29.566619,106.460572],[74.6,58.4,29.566911,106.461337],[56.8,42.5,29.568028,106.459864]],
+  'C区':[[44,10,29.560561,106.455628],[68.5,42.3,29.5594,106.454145],[58.2,48,29.559819,106.453588]]
+};
+const M_LAT=110970,M_LNG=96795; /* 本地纬度每度对应的米数 */
+function fitSim(pts){
+  const rx=pts[0][0],ry=pts[0][1],rlat=pts[0][2],rlng=pts[0][3];
+  let D=0,SE=0,SN=0;
+  pts.forEach(p=>{
+    const du=p[0]-rx,dv=p[1]-ry;
+    const E=(p[3]-rlng)*M_LNG,N=(p[2]-rlat)*M_LAT;
+    D+=du*du+dv*dv; SE+=du*E-dv*N; SN+=dv*E+du*N;
+  });
+  return {A:SE/D,B:SN/D,rx:rx,ry:ry,rlat:rlat,rlng:rlng};
+}
+const FIT={}; for(const c in CTRL)FIT[c]=fitSim(CTRL[c]);
+let map=null,markerLayer=null,markerIdx={},measureMode=false,measurePts=[],measureLayer=null,lastFitCampus=null,campusRect=null;
+/* 把平面图百分比坐标换算成真实经纬度（自动处理各校区平面图的旋转与缩放） */
+function xy2ll(c,x,y){
+  const f=FIT[c],du=x-f.rx,dv=y-f.ry;
+  const E=f.A*du+f.B*dv,N=f.B*du-f.A*dv;
+  return [f.rlat+N/M_LAT,f.rlng+E/M_LNG];
+}
+function campusBounds(c){
+  const cs=[[0,0],[100,0],[100,100],[0,100]].map(p=>xy2ll(c,p[0],p[1]));
+  const la=cs.map(p=>p[0]),ln=cs.map(p=>p[1]);
+  return L.latLngBounds([Math.min(...la),Math.min(...ln)],[Math.max(...la),Math.max(...ln)]);
+}
+function emojiIcon(em,cat){
+  const col=LEGCOLOR[cat]||'#3e86d6';
+  return L.divIcon({className:'map-pin',html:`<div class="pin-emoji" style="background:${col}">${em}</div>`,
+    iconSize:[28,28],iconAnchor:[14,14]});
+}
+function initMap(){
+  if(map)return;
+  map=L.map('mapbox',{zoomControl:true}).setView([29.58,106.38],13);
+  L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+    {subdomains:'1234',maxZoom:18,attribution:'© 高德地图'}).addTo(map);
+  markerLayer=L.layerGroup().addTo(map);
+  map.on('click',e=>{ if(measureMode)addMeasure(e.latlng); });
+}
+function buildMarkers(){
+  if(!markerLayer)return;
+  markerLayer.clearLayers(); markerIdx={};
+  const data=MAPS[curCampus];
+  data.hot.forEach((b,i)=>{
+    const[n,cat,em,x,y,d,t]=b;
+    const show=(curCat==='全部'||cat===curCat)&&(!_kw||(n+d+(t||'')).includes(_kw));
+    if(!show)return;
+    const ll=xy2ll(curCampus,x,y);
+    const m=L.marker(ll,{icon:emojiIcon(em,cat),title:n}).addTo(markerLayer);
+    m.on('click',()=>measureMode?addMeasure(ll):openInfo(i));
+    markerIdx[i]=m;
+  });
+}
+function renderMap(kw){
+  if(kw!==undefined)_kw=kw;
+  if(measureLayer&&map){map.removeLayer(measureLayer);measureLayer=null;}
+  const seg=document.getElementById('campusSeg');
+  seg.innerHTML=CAMPUSES.map(c=>`<button class="${c===curCampus?'on':''}" onclick="curCampus='${c}';curCat='全部';_kw='';document.getElementById('gs').value='';measurePts=[];document.getElementById('measureHint').innerHTML='';syncChips();renderMap()">${c}</button>`).join('');
+  document.getElementById('catChips').innerHTML=CATS.map(c=>`<div class="chip ${c===curCat?'on':''}" onclick="curCat='${c}';syncChips();renderMap()">${c}</div>`).join('');
+  document.getElementById('mapLegend').innerHTML=CATS.filter(c=>c!=='全部').map(c=>`<div class="lg"><span class="ld" style="background:${LEGCOLOR[c]}"></span>${c}</div>`).join('');
+  const data=MAPS[curCampus];
+  document.getElementById('campusIntro').innerHTML=data.intro||'';
+  initMap();
+  if(campusRect){map.removeLayer(campusRect);campusRect=null;}
+  if(measureLayer){map.removeLayer(measureLayer);measureLayer=null;}
+  if(curCampus!==lastFitCampus){
+    map.fitBounds(campusBounds(curCampus),{padding:[12,12]});
+    lastFitCampus=curCampus;
+  }
+  buildMarkers();
+  campusRect=L.rectangle(campusBounds(curCampus),{color:'#3e86d6',weight:1.5,fill:false,opacity:0.55,dashArray:'5,5'}).addTo(map);
+  const list=data.hot.filter(b=>(curCat==='全部'||b[1]===curCat)&&(!_kw||(b[0]+b[5]+(b[6]||'')).includes(_kw)));
+  document.getElementById('mapPills').innerHTML=list.length
+    ?list.map(b=>`<div class="pill" onclick="flyToPoi('${b[0]}')">${b[2]} ${b[0]}</div>`).join('')
+    :'<span style="font-size:12px;color:#9aa8b8">没有匹配的地点</span>';
+  setTimeout(()=>{if(map)map.invalidateSize();},60);
+}
+function flyToPoi(name){
+  const data=MAPS[curCampus]; const i=data.hot.findIndex(b=>b[0]===name);
+  if(i<0)return;
+  const ll=xy2ll(curCampus,data.hot[i][3],data.hot[i][4]);
+  map.flyTo(ll,17);
+  openInfo(i);
+}
+/* 测距模式：点击地图两点，显示真实直线距离（Leaflet 测地距离） */
+function toggleMeasure(){
+  measureMode=!measureMode;
+  measurePts=[];
+  document.getElementById('measureBtn').classList.toggle('on',measureMode);
+  document.getElementById('mapbox').classList.toggle('measuring',measureMode);
+  const hint=document.getElementById('measureHint');
+  hint.style.display=measureMode?'block':'none';
+  if(measureMode)hint.innerHTML='<b>📏 测距模式</b>：在地图上依次点击两个地点（或标记）即可连线并显示真实直线距离；再点一次重新开始。';
+  else hint.innerHTML='';
+  if(measureLayer){map.removeLayer(measureLayer);measureLayer=null;}
+}
+function addMeasure(ll){
+  if(measurePts.length>=2)measurePts=[];
+  measurePts.push(ll);
+  drawMeasure();
+}
+function drawMeasure(){
+  if(measureLayer){map.removeLayer(measureLayer);measureLayer=null;}
+  if(!measurePts||measurePts.length<2)return;
+  const a=measurePts[0],b=measurePts[1];
+  const dist=Math.round(map.distance(a,b));
+  measureLayer=L.layerGroup([
+    L.polyline([a,b],{color:'#ff4d4f',weight:3,dashArray:'6,4'}),
+    L.circleMarker(a,{radius:5,color:'#ff4d4f',fillColor:'#ff4d4f',fillOpacity:1}),
+    L.circleMarker(b,{radius:5,color:'#ff4d4f',fillColor:'#ff4d4f',fillOpacity:1})
+  ]).addTo(map);
+  const mid=L.latLng((a.lat+b.lat)/2,(a.lng+b.lng)/2);
+  L.tooltip({permanent:true,direction:'top',className:'m-tip'}).setLatLng(mid).setContent('约 '+dist+' 米').addTo(measureLayer);
+  document.getElementById('measureHint').innerHTML='<b>📏 两点距离</b>：约 '+dist+' 米（地图直线距离）。再点地图可重选。';
+}
+function syncChips(){document.querySelectorAll('#catChips .chip').forEach(c=>c.classList.toggle('on',c.textContent===curCat));renderMap();}
+
+/* ---------- 地点信息面板 ---------- */
+function openInfo(nameOrIdx){
+  const data=MAPS[curCampus];
+  const b=typeof nameOrIdx==='number'?data.hot[nameOrIdx]:data.hot.find(x=>x[0]===nameOrIdx);
+  if(!b)return;
+  const[n,cat,em,x,y,d,t]=b;
+  document.getElementById('shEm').style.background=cat==='餐饮'?'var(--orange-light)':cat==='运动'?'var(--green-light)':cat==='生活'?'var(--purple-light)':cat==='风景'?'#ddf5f3':'var(--blue-light)';
+  document.getElementById('shEm').textContent=em;
+  document.getElementById('shName').textContent=n;
+  document.getElementById('shTags').innerHTML=`<span class="tg">${cat}</span><span class="tg">${curCampus}</span>`;
+  document.getElementById('shDesc').textContent=d||'';
+  document.getElementById('shTip').style.display=t?'block':'none';
+  document.getElementById('shTip').textContent=t?'💡 '+t:'';
+  document.getElementById('mask').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+}
+function closeInfo(){
+  document.getElementById('mask').classList.remove('on');
+  document.getElementById('sheet').classList.remove('on');
+}
+
+/* ---------- 校车：下一班计算 ---------- */
+let busDirKey=null;
+function renderBus(){
+  const dir=document.getElementById('busDir');
+  if(!dir.children.length){
+    dir.innerHTML=Object.keys(SHUTTLE).map((k,i)=>`<button class="${i===0?'on':''}" onclick="busDirKey='${k}';syncBusDir();renderBus()">${k}</button>`).join('');
+    busDirKey=Object.keys(SHUTTLE)[0];
+  }
+  const sel=busDirKey||Object.keys(SHUTTLE)[0];
+  const stopSel=document.getElementById('busStop');
+  const stops=Object.keys(SHUTTLE[sel].stops);
+  if(stopSel.dataset.dir!==sel){
+    stopSel.dataset.dir=sel;
+    stopSel.innerHTML=stops.map(s=>`<option>${s}</option>`).join('');
+    stopSel.value=stops[0];
+  }
+  const times=SHUTTLE[sel].stops[stopSel.value];
+  const sunday=SHUTTLE[sel].sunday;
+  document.getElementById('busNote').textContent='('+stopSel.value+' · 每日'+times.length+'班)';
+  const now=new Date();const hm=now.getHours()*60+now.getMinutes();const dow=now.getDay();
+  let next=null;
+  for(const t of times){
+    const[hh,mm]=t.split(':').map(Number);const m=hh*60+mm;
+    if(m<hm)continue;
+    if(dow===0&&sunday.includes(t))continue;
+    next=t;break;
+  }
+  const nb=document.getElementById('nextBus');
+  if(next){
+    const[hh,mm]=next.split(':').map(Number);
+    const diff=hh*60+mm-hm;
+    const txt=diff===0?'就是这一班！':(diff>=60?`约 ${Math.floor(diff/60)} 小时 ${diff%60} 分后发车`:`约 ${diff} 分后发车`);
+    nb.innerHTML=`<div class="next"><div class="lab">下一班 · ${sel}（${stopSel.value}）</div>
+      <div class="t">${next}</div><div class="sub">${txt} <b>· 始发站提前15分钟到位</b></div></div>`;
+  }else{
+    nb.innerHTML=`<div class="next"><div class="lab">今日班次已结束</div>
+      <div class="t" style="font-size:24px">明早 ${times[0]}</div>
+      <div class="sub">首班 <b>${times[0]}</b>${sunday.includes(times[0])?'（周日停运）':''}</div></div>`;
+  }
+  document.getElementById('busTable').innerHTML=times.map(t=>{
+    const[hh,mm]=t.split(':').map(Number);const m=hh*60+mm;
+    const past=m<hm,soon=next&&t===next;
+    const badge=sunday.includes(t)?'<span class="badge">周日停</span>':'';
+    return `<div class="tb-row ${past?'past':''} ${soon?'soon':''}"><span class="tm">${t}</span>
+      <span class="ds">${past?'已发车':soon?'即将发车':'候车'}</span>${badge}</div>`;
+  }).join('');
+  document.getElementById('xRoutes').innerHTML=XROUTES.map(r=>
+    `<div class="xroute"><h4>${r.name} <span style="font-weight:400;font-size:10.5px;color:#9aa8b8">${r.note}</span></h4>
+     <table class="xtable"><tr>${r.head.map(h=>`<th>${h}</th>`).join('')}</tr>
+     ${r.rows.map(row=>`<tr>${row.map(v=>`<td class="${v.includes('*')?'wk':''}">${v}</td>`).join('')}</tr>`).join('')}</table></div>`).join('');
+}
+function syncBusDir(){
+  document.querySelectorAll('#busDir button').forEach(b=>b.classList.toggle('on',b.textContent===busDirKey));
+  renderBus();
+}
+
+/* ---------- 工具：四分制 GPA & 电话 ---------- */
+function initTools(){
+  addGpaRow();addGpaRow();addGpaRow();
+  document.getElementById('phoneList').innerHTML=PHONES.map(g=>{
+    const items=g.items.map(([n,p])=>{
+      const isTel=/^[0-9][0-9-]{6,}$/.test(p);
+      const link=isTel?`<a href="tel:${p.replace(/-/g,'')}">拨打</a>`
+        :`<a href="https://${p}" target="_blank" style="background:var(--blue)">打开</a>`;
+      return `<div class="ph"><div class="pic">📞</div><div><div class="pn">${n}</div><div class="pd">${p}</div></div>${link}</div>`;
+    }).join('');
+    return `<div class="phg"><h4>${g.g}</h4>${items}</div>`;
+  }).join('');
+}
+function addGpaRow(){
+  const row=document.createElement('div');row.className='gpa-row';
+  row.innerHTML=`<input placeholder="课程名(可选)" class="cname">
+    <input placeholder="学分" class="cred" inputmode="decimal" style="max-width:64px">
+    <input placeholder="成绩" class="cscore" inputmode="decimal" style="max-width:64px">
+    <button class="del" onclick="this.parentNode.remove()">×</button>`;
+  document.getElementById('gpaRows').appendChild(row);
+}
+/* 四分制绩点映射：60=1.0，每分+0.1，90及以上封顶4.0，<60为0 */
+function gpa4(s){
+  if(s<60)return 0;
+  if(s>=90)return 4.0;
+  return Math.round((s-50)*10)/10;
+}
+function calcGpa(){
+  const rows=[...document.querySelectorAll('#gpaRows .gpa-row')];
+  let sumC=0,sumCP=0,ok=false;
+  rows.forEach(r=>{
+    const c=parseFloat(r.querySelector('.cred').value),s=parseFloat(r.querySelector('.cscore').value);
+    if(c>0&&s>=0){ok=true;sumC+=c;sumCP+=c*gpa4(s);}
+  });
+  const out=document.getElementById('gpaOut');
+  out.innerHTML=ok?`<div class="gpa-result"><div class="big">${(sumCP/sumC).toFixed(2)}</div>
+    <div class="det">平均绩点 GPA（四分制 · 基于 ${sumC} 学分加权）</div></div>`
+    :`<div class="gpa-result"><div class="det">请输入至少一门有效的学分与成绩</div></div>`;
+}
+
+/* ---------- 攻略清单 ---------- */
+const KEY='cqu_bxs_v3';let checked=JSON.parse(localStorage.getItem(KEY)||'{}');
+function renderGuide(){
+  document.getElementById('guideTL').innerHTML=GUIDE.map(([h,p])=>`<div class="ti"><h5>${h}</h5><p>${p}</p></div>`).join('');
+  const box=document.getElementById('checklist');let html='';
+  LIST.forEach((g,gi)=>{
+    html+=`<div class="grp"><h4>${g.g}</h4>`;
+    g.items.forEach((it,ii)=>{
+      const id=gi+'_'+ii,on=!!checked[id];
+      html+=`<div class="ck ${on?'done':''}" onclick="toggleCheck('${id}',this)"><div class="bx">${on?'✓':''}</div><span>${it}</span></div>`;
+    });
+    html+='</div>';
+  });
+  box.innerHTML=html;updateProgress();
+}
+function toggleCheck(id,node){
+  checked[id]=!checked[id];if(!checked[id])delete checked[id];
+  localStorage.setItem(KEY,JSON.stringify(checked));
+  node.classList.toggle('done',!!checked[id]);
+  node.querySelector('.bx').textContent=checked[id]?'✓':'';
+  updateProgress();
+}
+function updateProgress(){
+  const total=LIST.reduce((s,g)=>s+g.items.length,0),done=Object.keys(checked).length,pct=Math.round(done/total*100);
+  document.getElementById('pFill').style.width=pct+'%';
+  document.getElementById('pNum').textContent=pct+'%';
+  document.getElementById('pgTxt').textContent=done+'/'+total+' 项已备齐';
+}
+function resetCheck(){checked={};localStorage.removeItem(KEY);renderGuide();}
+
+/* ---------- 我的专属清单（自定义待办） ---------- */
+const TODO_KEY='cqu_bxs_todo';let todos=JSON.parse(localStorage.getItem(TODO_KEY)||'[]');
+function esc(s){return s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function renderTodo(){
+  const list=document.getElementById('todoList'),empty=document.getElementById('todoEmpty');
+  list.innerHTML=todos.map((t,i)=>`<div class="ck ${t.done?'done':''}" onclick="toggleTodo(${i})"><div class="bx">${t.done?'✓':''}</div><span>${esc(t.t)}</span><button class="del" onclick="event.stopPropagation();delTodo(${i})">✕</button></div>`).join('');
+  empty.style.display=todos.length?'none':'block';
+  const done=todos.filter(t=>t.done).length;
+  document.getElementById('todoTxt').textContent=todos.length?`${done}/${todos.length} 已完成`:'';
+}
+function addTodo(){
+  const inp=document.getElementById('todoInput'),v=inp.value.trim();
+  if(!v)return;
+  todos.push({t:v,done:false});inp.value='';
+  localStorage.setItem(TODO_KEY,JSON.stringify(todos));renderTodo();
+}
+function toggleTodo(i){todos[i].done=!todos[i].done;localStorage.setItem(TODO_KEY,JSON.stringify(todos));renderTodo();}
+function delTodo(i){todos.splice(i,1);localStorage.setItem(TODO_KEY,JSON.stringify(todos));renderTodo();}
+function clearTodo(){if(!todos.length)return;todos=[];localStorage.removeItem(TODO_KEY);renderTodo();}
+
+/* ---------- 问答交互 ---------- */
+const chatList=document.getElementById('chatList');
+function el(h){const d=document.createElement('div');d.innerHTML=h;return d.firstElementChild;}
+function addMsg(role,html){
+  chatList.appendChild(el(`<div class="msg ${role}"><div class="av">${role==='ai'?'🤖':'我'}</div><div class="bub">${html}</div></div>`));
+  document.getElementById('main').scrollTop=document.getElementById('main').scrollHeight;
+}
+function addTyping(){
+  const n=el(`<div class="msg ai"><div class="av">🤖</div><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div>`);
+  chatList.appendChild(n);document.getElementById('main').scrollTop=document.getElementById('main').scrollHeight;return n;
+}
+function matchKB(text){
+  const t=text.toLowerCase().replace(/\s/g,'');let best=null,bs=0;
+  for(const it of KB){let s=0;for(const tag of it.tags){if(t.includes(tag))s+=tag.length>=2?2+tag.length*0.1:1;}
+    if(s>bs){bs=s;best=it;}}
+  return bs>=2?best:null;
+}
+function send(text){
+  if(!text)return;addMsg('user',text);const ty=addTyping();
+  const reply=()=>{ty.remove();const hit=matchKB(text);
+    if(hit){addMsg('ai',hit.a);
+      const rel=KB.filter(k=>k!==hit&&!['打招呼','致谢','关于我'].includes(k.title)).sort(()=>.5-Math.random()).slice(0,3);
+      const cb=el('<div class="qchips" style="margin:0 0 0 40px"></div>');
+      rel.forEach(k=>cb.appendChild(el(`<div class="qchip" onclick="send('${k.tags[0]}')">${k.tags[0]}</div>`)));
+      chatList.appendChild(cb);
+    }else{
+      const sg=['食堂推荐','校车下一班','图书馆几点开门','怎么选课','快递在哪取','新生报到流程'];
+      addMsg('ai',FALLBACK);
+      const cb=el('<div class="qchips" style="margin:0 0 0 40px"></div>');
+      sg.forEach(q=>cb.appendChild(el(`<div class="qchip" onclick="send('${q}')">${q}</div>`)));
+      chatList.appendChild(cb);
+    }
+    document.getElementById('main').scrollTop=document.getElementById('main').scrollHeight;
+  };
+  const llm=callLLM(text);
+  if(llm&&llm.then){llm.then(r=>{ty.remove();addMsg('ai',r);});}else setTimeout(reply,480+Math.random()*380);
+}
+function sendInput(){const i=document.getElementById('chatInput');const v=i.value.trim();if(!v)return;i.value='';send(v);}
+
+/* ---------- 初始化 ---------- */
+renderGuide();renderTodo();
+</script>
+</body>
+</html>
